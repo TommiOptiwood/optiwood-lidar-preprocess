@@ -45,16 +45,22 @@ def tile(
     cols = np.floor((x - ox) / tile_size).astype(np.int64)
     rows = np.floor((y - oy) / tile_size).astype(np.int64)
 
-    # Group indices by (col, row)
-    keys = np.stack([cols, rows], axis=1)
-    unique_keys, inverse = np.unique(keys, axis=0, return_inverse=True)
+    # Encode (col, row) as single int64 for fast sorting
+    n_rows = int(rows.max()) + 1
+    key = cols * n_rows + rows
+
+    sort_idx = np.argsort(key, kind="stable")
+    sorted_key = key[sort_idx]
+    boundaries = np.flatnonzero(np.diff(sorted_key)) + 1
+    groups = np.split(sort_idx, boundaries)
+    unique_keys = sorted_key[np.concatenate([[0], boundaries])]
 
     tiles: dict[tuple[int, int], MMLPointCloud] = {}
-    for i, (col, row) in enumerate(unique_keys):
-        mask = inverse == i
-        tiles[(int(col), int(row))] = MMLPointCloud(
-            points=pc.points[mask],
-            intensity=pc.intensity[mask],
+    for k, idx in zip(unique_keys, groups):
+        col, row = int(k // n_rows), int(k % n_rows)
+        tiles[(col, row)] = MMLPointCloud(
+            points=pc.points[idx],
+            intensity=pc.intensity[idx],
             crs=pc.crs,
         )
 

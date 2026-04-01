@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import numpy as np
 from scipy.spatial import KDTree
+from scipy.ndimage import distance_transform_edt
 
 from .loaders import MMLPointCloud
 
@@ -59,6 +60,69 @@ def remove_noise(
         intensity=pc.intensity[mask],
         crs=pc.crs,
     )
+
+
+def normalize_height(pc: MMLPointCloud, ground: MMLPointCloud) -> MMLPointCloud:
+    """
+    Normalize Z to height above ground.
+
+    For each point, the ground elevation at (X, Y) is interpolated from
+    the ground point cloud and subtracted from Z.
+
+    Typical use with MML data (ground = classification 2):
+
+        ground = MMLPointCloud(
+            points=las.xyz[las.classification == 2],
+            intensity=las.intensity[las.classification == 2].astype(float),
+        )
+        pc_norm = normalize_height(pc, ground)
+
+    Parameters
+    ----------
+    pc : MMLPointCloud
+        Full point cloud with absolute Z values.
+    ground : MMLPointCloud
+        Ground points only (classification 2 in MML data).
+
+    Returns
+    -------
+    MMLPointCloud with Z replaced by height above ground (metres).
+    Negative values are clipped to 0.
+    """
+    if len(ground) == 0:
+        raise ValueError("ground point cloud is empty")
+
+    # Rasterize ground points to a 1m grid, then look up each point — O(n)
+    resolution = 1.0
+    x_g, y_g, z_g = ground.points[:, 0], ground.points[:, 1], ground.points[:, 2]
+    x_min, y_min = x_g.min(), y_g.min()
+
+    xi = ((x_g - x_min) / resolution).astype(np.int64)
+    yi = ((y_g - y_min) / resolution).astype(np.int64)
+    nx, ny = int(xi.max()) + 1, int(yi.max()) + 1
+
+    grid_sum = np.zeros((nx, ny), dtype=np.float64)
+    grid_cnt = np.zeros((nx, ny), dtype=np.int32)
+    np.add.at(grid_sum, (xi, yi), z_g)
+    np.add.at(grid_cnt, (xi, yi), 1)
+
+    filled = grid_cnt > 0
+    grid_z = np.where(filled, grid_sum / np.maximum(grid_cnt, 1), 0.0)
+
+    # Fill empty cells with nearest ground value
+    if not filled.all():
+        _, (ri, ci) = distance_transform_edt(~filled, return_indices=True)
+        grid_z = grid_z[ri, ci]
+
+    # Look up ground elevation for every point in pc
+    xi_q = np.clip(((pc.points[:, 0] - x_min) / resolution).astype(np.int64), 0, nx - 1)
+    yi_q = np.clip(((pc.points[:, 1] - y_min) / resolution).astype(np.int64), 0, ny - 1)
+    ground_z_q = grid_z[xi_q, yi_q]
+
+    new_points = pc.points.copy()
+    new_points[:, 2] = np.maximum(pc.points[:, 2] - ground_z_q, 0.0)
+
+    return MMLPointCloud(points=new_points, intensity=pc.intensity.copy(), crs=pc.crs)
 
 
 def clip_bbox(
