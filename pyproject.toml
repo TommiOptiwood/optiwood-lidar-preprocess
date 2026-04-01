@@ -1,0 +1,59 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "optiwood-lidar-utils"
+version = "0.1.0"
+description = "Preprocessing library for airborne LiDAR data from the National Land Survey of Finland (MML)"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Optiwood Technology Oy", email = "info@optiwood.io" }
+]
+keywords = ["lidar", "forestry", "point-cloud", "mml", "finland", "geospatial"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Scientific/Engineering :: GIS",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "laspy>=2.5",
+    "lazrs-python>=0.5",
+    "numpy>=1.24",
+    "pyproj>=3.6",
+    "scipy>=1.10",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-cov",
+    "black",
+    "ruff",
+]
+open3d = [
+    "open3d>=0.18",  # valinnainen: voxelisointi ja visualisointi
+]
+
+[project.urls]
+Homepage = "https://optiwood.io"
+Repository = "https://github.com/TommiOptiwood/optiwood-lidar-utils"
+Issues = "https://github.com/TommiOptiwood/optiwood-lidar-utils/issues"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["optiwood_lidar*"]
+
+[tool.black]
+line-length = 88
+target-version = ["py310"]
+
+[tool.ruff]
+line-length = 88
+select = ["E", "F", "I"]

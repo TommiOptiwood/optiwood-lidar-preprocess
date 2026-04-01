@@ -1,0 +1,41 @@
+# Sisäiset dokumentit
+PROJEKTI.md
+*.pdf
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Virtuaaliympäristöt
+.venv/
+venv/
+env/
+
+# Testit ja coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Editorit
+.vscode/
+.idea/
+*.swp
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Data — ei oikeaa pistepilviaineistoa repoon
+*.las
+*.laz
+*.ply
+*.e57
+data/
