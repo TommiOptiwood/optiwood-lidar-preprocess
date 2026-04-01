@@ -79,8 +79,8 @@ MMLPointCloud(points, intensity, crs="EPSG:3067")
 ### Tiling
 
 ```python
-tile(pc, tile_size=50.0, origin_x=None, origin_y=None)  # → dict[(col, row) → MMLPointCloud]
-iter_tiles(pc, tile_size=50.0)                           # → generator
+tile(pc, tile_size=50.0, origin_x=None, origin_y=None, min_points=0)  # → dict[(col, row) → MMLPointCloud]
+iter_tiles(pc, tile_size=50.0, min_points=0)                           # → generator
 ```
 
 ### Filters
@@ -98,6 +98,37 @@ to_geojson(pc, path, to_wgs84=False)
 to_ply(pc, path)                 # ASCII PLY
 to_las(pc, path)                 # LAS 1.4
 ```
+
+## Common patterns
+
+**Drop edge fragments**
+
+Survey boundaries produce tiny tiles with only a handful of points — not useful
+for ML. Filter them out with `min_points`:
+
+```python
+tiles = tile(pc_norm, tile_size=50.0, min_points=1000)
+```
+
+**Height normalisation is required for MML open data**
+
+MML files store absolute elevation (Z ≈ 15–250 m depending on terrain).
+The ML pipeline expects height above ground (Z ≈ 0–40 m).
+Always run `normalize_height` before tiling:
+
+```python
+ground = MMLPointCloud(
+    points=las.xyz[las.classification == 2],
+    intensity=las.intensity[las.classification == 2].astype(float),
+)
+pc_norm = normalize_height(pc, ground)
+tiles = tile(pc_norm, tile_size=50.0, min_points=1000)
+```
+
+**Noise removal is optional for MML, recommended for drone data**
+
+MML data is pre-processed and generally clean. `remove_noise` is most useful
+when working with raw drone surveys or when merging multiple flight strips.
 
 ## License
 
