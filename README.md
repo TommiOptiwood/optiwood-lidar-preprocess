@@ -1,4 +1,6 @@
-# optiwood-lidar-utils
+# optiwood-lidar-preprocess
+
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Open source preprocessing library for airborne LiDAR point clouds, with first-class support for data from the National Land Survey of Finland (MML/Maanmittauslaitos).
 
@@ -15,7 +17,7 @@ All steps are designed to run without PDAL — core dependencies are `laspy`, `n
 ## Installation
 
 ```bash
-pip install optiwood-lidar-utils
+pip install optiwood-lidar-preprocess
 ```
 
 ## Quick start

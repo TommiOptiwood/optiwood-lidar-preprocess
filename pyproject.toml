@@ -3,7 +3,7 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.backends.legacy:build"
 
 [project]
-name = "optiwood-lidar-utils"
+name = "optiwood-lidar-preprocess"
 version = "0.1.0"
 description = "Preprocessing library for airborne LiDAR data from the National Land Survey of Finland (MML)"
 readme = "README.md"
@@ -43,8 +43,8 @@ open3d = [
 
 [project.urls]
 Homepage = "https://optiwood.io"
-Repository = "https://github.com/TommiOptiwood/optiwood-lidar-utils"
-Issues = "https://github.com/TommiOptiwood/optiwood-lidar-utils/issues"
+Repository = "https://github.com/TommiOptiwood/optiwood-lidar-preprocess"
+Issues = "https://github.com/TommiOptiwood/optiwood-lidar-preprocess/issues"
 
 [tool.setuptools.packages.find]
 where = ["."]
