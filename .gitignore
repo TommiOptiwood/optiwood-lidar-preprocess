@@ -33,9 +33,15 @@ htmlcov/
 .DS_Store
 Thumbs.db
 
+# Kehitystyökalut
+demo_plot.py
+run_demo.bat
+pipeline_demo.png
+
 # Data — ei oikeaa pistepilviaineistoa repoon
 *.las
 *.laz
 *.ply
 *.e57
+*.npz
 data/

@@ -1,7 +1,9 @@
 """
 Exporters — write MMLPointCloud to various formats.
 
-to_numpy   — .npz (points + intensity, direct numpy/PyTorch input)
+to_numpy   — .npz (points + intensity, direct numpy/PyTorch input);
+             supports center=True (subtract tile centroid) and
+             fields selection (["xyz", "intensity"]).
 to_geojson — GeoJSON FeatureCollection (visualisation, GIS tools)
 to_ply     — ASCII PLY (CloudCompare, MeshLab, Open3D)
 to_las     — LAS 1.4 via laspy
@@ -17,15 +19,48 @@ import numpy as np
 from .loaders import MMLPointCloud
 
 
-def to_numpy(pc: MMLPointCloud, path: str | Path) -> None:
+def to_numpy(
+    pc: MMLPointCloud,
+    path: str | Path,
+    center: bool = False,
+    fields: list[str] | None = None,
+) -> None:
     """
-    Save as compressed .npz with arrays 'points' (n,3) and 'intensity' (n,).
+    Save as compressed .npz.
+
+    Parameters
+    ----------
+    pc : MMLPointCloud
+    path : str | Path
+        Output path (`.npz` extension added automatically if missing).
+    center : bool
+        If True, subtract the tile centroid (mean XYZ) from all coordinates
+        before saving. Useful for reducing floating-point precision loss in
+        ML models that expect near-origin inputs.
+    fields : list[str] | None
+        Which arrays to include in the .npz. Allowed values: "xyz",
+        "intensity". Defaults to both. Example: ``fields=["xyz"]`` saves
+        only the point coordinates.
 
     Load back with:
         data = np.load("file.npz")
         points, intensity = data["points"], data["intensity"]
     """
-    np.savez_compressed(path, points=pc.points, intensity=pc.intensity)
+    if fields is None:
+        fields = ["xyz", "intensity"]
+
+    arrays: dict[str, np.ndarray] = {}
+
+    if "xyz" in fields:
+        pts = pc.points.copy()
+        if center:
+            pts -= pts.mean(axis=0)
+        arrays["points"] = pts
+
+    if "intensity" in fields:
+        arrays["intensity"] = pc.intensity
+
+    np.savez_compressed(path, **arrays)
 
 
 def to_geojson(

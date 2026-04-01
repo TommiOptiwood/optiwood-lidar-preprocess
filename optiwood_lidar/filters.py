@@ -3,6 +3,7 @@ Filters for point cloud cleaning and clipping.
 
 remove_noise — Statistical Outlier Removal (SOR) via scipy KDTree.
 clip_bbox    — clip to a 2-D bounding box.
+voxelize     — downsample to one point per 3-D voxel (GridSample-style).
 """
 
 from __future__ import annotations
@@ -123,6 +124,37 @@ def normalize_height(pc: MMLPointCloud, ground: MMLPointCloud) -> MMLPointCloud:
     new_points[:, 2] = np.maximum(pc.points[:, 2] - ground_z_q, 0.0)
 
     return MMLPointCloud(points=new_points, intensity=pc.intensity.copy(), crs=pc.crs)
+
+
+def voxelize(pc: MMLPointCloud, voxel_size: float = 0.2) -> MMLPointCloud:
+    """
+    Downsample to one point per 3-D voxel (GridSample-style).
+
+    Each voxel's representative point is the centroid (mean XYZ and mean
+    intensity) of all points that fall into that voxel.
+
+    Parameters
+    ----------
+    pc : MMLPointCloud
+    voxel_size : float
+        Edge length of the cubic voxel in metres. Default 0.2 m.
+
+    Returns
+    -------
+    MMLPointCloud with at most one point per voxel.
+    """
+    voxel_idx = np.floor(pc.points / voxel_size).astype(np.int64)
+    _, inverse, counts = np.unique(voxel_idx, axis=0, return_inverse=True, return_counts=True)
+
+    n_voxels = len(counts)
+    new_points = np.zeros((n_voxels, 3), dtype=np.float64)
+    new_intensity = np.zeros(n_voxels, dtype=np.float64)
+    np.add.at(new_points, inverse, pc.points)
+    np.add.at(new_intensity, inverse, pc.intensity)
+    new_points /= counts[:, None]
+    new_intensity /= counts
+
+    return MMLPointCloud(points=new_points, intensity=new_intensity, crs=pc.crs)
 
 
 def clip_bbox(
